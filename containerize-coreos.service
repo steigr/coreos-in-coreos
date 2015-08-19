@@ -1,0 +1,10 @@
+[Unit]
+Description=CoreOS Container Builder
+Requires=docker.service
+After=docker.service
+
+[Service]
+EnvironmentFile=/etc/os-release
+RemainAfterExit=yes
+ExecStartPre=-/usr/bin/docker rmi ${ID}:${VERSION_ID}
+ExecStart=/bin/sh -c 'cnt=$(mktemp -d); mkdir -p $cnt/coreos/etc/systemd/system; echo dev-hugepages.mount tmp.mount usr-share-oem.mount systemd-machine-id-commit.service audit-rules.service | xargs -n1 -IU ln -s /dev/null $cnt/coreos/etc/systemd/system/U; ln -s usr/bin $cnt/coreos/bin; ln -s usr/sbin $cnt/coreos/sbin; ln -s usr/lib64 $cnt/coreos/lib; ln -s usr/lib64 $cnt/coreos/lib64; echo -e "from scratch\nadd coreos /\nvolume /usr /var/lib/docker /var/lib/early-docker /usr/share/oem\nenv container=docker\nentrypoint [\\"/usr/lib/systemd/systemd\\"]" > $cnt/Dockerfile; docker build -t ${ID}:${VERSION_ID} $cnt; rm -r $cnt'
